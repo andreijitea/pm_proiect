@@ -13,15 +13,16 @@
 #define GAIN 12
 #define SMOOTHING 0.2
 
+// #define TESTBENCH_MODE
+
 // FFT Implementation Options
 // #define FFT_FLOAT_NO_LUT
-#define FFT_FLOAT_LUT
-// #define FFT_INT_LUT
-// #define FFT_INT_SPLIT_LUT
+// #define FFT_FLOAT_LUT
+#define FFT_INT_LUT
 
 // Windowing Options
 // #define USE_RECTANGULAR_WINDOW
-#define USE_HAMMING_WINDOW
-// #define USE_HANN_WINDOW
+// #define USE_HAMMING_WINDOW
+#define USE_HANN_WINDOW
 
 #endif

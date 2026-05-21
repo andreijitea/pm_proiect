@@ -8,37 +8,35 @@ volatile int sampleIndex = 0;
 volatile bool newDataReady = false;
 
 void init_adc() {
-    ADMUX = 0;             // Clear ADMUX; select ADC0 (A0)
-    ADMUX |= (1 << REFS0); // Set to AVcc
+    ADMUX = 0;
+    ADMUX |= (1 << REFS0);
 
-    ADCSRA = 0;            // Clear ADCSRA
-    ADCSRB = 0;            // Clear ADCSRB (No Auto-trigger)
-    ADCSRA |= (1 << ADEN); // Enable ADC
-    ADCSRA |= (1 << ADIE); // Enable ADC Interrupt
-    ADCSRA |= (1 << ADPS2) |
-              (1 << ADPS1); // Prescaler 64 for ~125kHz ADC clock (16MHz / 64)
+    ADCSRA = 0;
+    ADCSRB = 0;
+    ADCSRA |= (1 << ADEN);
+    ADCSRA |= (1 << ADIE);
+    ADCSRA |= (1 << ADPS2) | (1 << ADPS1);
 }
 
 void init_timer1() {
     TCCR1A = 0;
     TCCR1B = 0;
-    TCCR1B |= (1 << WGM12);  // CTC mode
-    TCCR1B |= (1 << CS10);   // Prescaler 1
-    TIMSK1 |= (1 << OCIE1A); // Enable Timer1 Compare Match A Interrupt!
+    TCCR1B |= (1 << WGM12);
+    TCCR1B |= (1 << CS10);
+    TIMSK1 |= (1 << OCIE1A);
 
-    OCR1A = 1999; // Compare Match A for 8kHz
+    // 8000Hz sampling rate
+    OCR1A = 1999;
 }
 
 void restart_sampling() {
     sampleIndex = 0;
     newDataReady = false;
-    TCNT1 = 0;             // Reset Timer1 counter
-    TCCR1B |= (1 << CS10); // Start Timer1 to securely trigger ADC
+    TCNT1 = 0;
+    TCCR1B |= (1 << CS10);
 }
 
-ISR(TIMER1_COMPA_vect) {
-    ADCSRA |= (1 << ADSC); // Start ADC Conversion
-}
+ISR(TIMER1_COMPA_vect) { ADCSRA |= (1 << ADSC); }
 
 ISR(ADC_vect) {
     // Read ADC value and store in vReal
@@ -52,8 +50,9 @@ ISR(ADC_vect) {
         sampleIndex++;
     }
 
+    // Stop the timer
     if (sampleIndex >= SAMPLES) {
         newDataReady = true;
-        TCCR1B &= ~(1 << CS10); // Stop Timer1 to halt sampling until next batch
+        TCCR1B &= ~(1 << CS10);
     }
 }
