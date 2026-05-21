@@ -8,14 +8,16 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
-#define SAMPLES 64
+#define SAMPLES 128
 #define SAMPLING_FREQ 8000
 #define GAIN 12
 #define SMOOTHING 0.2
 
 // FFT Implementation Options
-#define FFT_FLOAT_NO_LUT
-// #define FFT_FLOAT_LUT
+// #define FFT_FLOAT_NO_LUT
+#define FFT_FLOAT_LUT
+// #define FFT_INT_LUT
+// #define FFT_INT_SPLIT_LUT
 
 // Windowing Options
 // #define USE_RECTANGULAR_WINDOW

@@ -25,7 +25,13 @@ void apply_window(double *data) {
 #ifdef USE_HAMMING_WINDOW
 void apply_window(double *data) {
     for (int i = 0; i < SAMPLES; i++) {
-        data[i] *= pgm_read_float(&hammingWindow[i]);
+        #if defined(FFT_INT_LUT) || defined(FFT_INT_SPLITRADIX)
+            // int16 table: Q15 scaled, divide by 32767 to get 0..1
+            data[i] *= (double)((int16_t)pgm_read_word(&hammingWindow[i])) / 32767.0;
+        #else
+            // float table
+            data[i] *= pgm_read_float(&hammingWindow[i]);
+        #endif
     }
 }
 #endif
@@ -33,7 +39,11 @@ void apply_window(double *data) {
 #ifdef USE_HANN_WINDOW
 void apply_window(double *data) {
     for (int i = 0; i < SAMPLES; i++) {
-        data[i] *= pgm_read_float(&hannWindow[i]);
+        #if defined(FFT_INT_LUT) || defined(FFT_INT_SPLITRADIX)
+            data[i] *= (double)((int16_t)pgm_read_word(&hannWindow[i])) / 32767.0;
+        #else
+            data[i] *= pgm_read_float(&hannWindow[i]);
+        #endif
     }
 }
 #endif

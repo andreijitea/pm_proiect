@@ -13,7 +13,7 @@ void init_display() {
 void draw_spectrum() {
     u8g2.firstPage();
     do {
-        // START AT i = 2 to skip 0Hz and 125Hz bins
+        // START AT i = 2 to skip the first couple lowest bins
         for (int i = 2; i < (SAMPLES / 2); i++) {
             int h = (int)smoothedHeights[i];
             if (h > 63)
@@ -22,8 +22,11 @@ void draw_spectrum() {
                 h = 2;
 
             // Shift the X axis back by 2 bins so they render on the left edge
-            int x = (i - 2) * 4;
-            u8g2.drawBox(x, 64 - h, 3, h);
+            int binWidth = 256 / SAMPLES; // 4px for 64 samples, 2px for 128 samples
+            int x = (i - 2) * binWidth;
+            
+            // Width of the box is binWidth minus 1 to leave a 1px gap between bars
+            u8g2.drawBox(x, 64 - h, binWidth > 1 ? binWidth - 1 : 1, h);
         }
     } while (u8g2.nextPage());
 }
