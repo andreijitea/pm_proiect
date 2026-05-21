@@ -13,10 +13,13 @@
 #define GAIN 12
 #define SMOOTHING 0.2
 
-// Pick ONE, comment out the rest
-#define FFT_FLOAT_LUT
-// #define FFT_FLOAT_NOLUT
-// #define FFT_INT_LUT
-// #define FFT_INT_SPLITRADIX
+// FFT Implementation Options
+#define FFT_FLOAT_NO_LUT
+// #define FFT_FLOAT_LUT
+
+// Windowing Options
+// #define USE_RECTANGULAR_WINDOW
+#define USE_HAMMING_WINDOW
+// #define USE_HANN_WINDOW
 
 #endif

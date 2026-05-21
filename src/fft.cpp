@@ -1,6 +1,55 @@
 #include "fft.hpp"
 #include "utils.hpp"
+#include "lut.hpp"
 
+#ifdef FFT_FLOAT_NO_LUT
+void run_fft(double *vReal, double *vImag) {
+    // Bit reversal
+    uint16_t j = 0;
+    for (uint16_t i = 0; i < (SAMPLES - 1); i++) {
+        if (i < j) {
+            double tempR = vReal[i];
+            vReal[i] = vReal[j];
+            vReal[j] = tempR;
+            double tempI = vImag[i]; 
+            vImag[i] = vImag[j]; 
+            vImag[j] = tempI;
+        }
+        uint16_t k = (SAMPLES >> 1);
+        while (k <= j) { 
+            j -= k; 
+            k >>= 1; 
+        }
+        j += k;
+    }
+
+    // Cooley-Tukey FFT
+    for (uint16_t step = 1; step < SAMPLES; step <<= 1) {
+        uint16_t jump = step << 1;
+
+        for (uint16_t i = 0; i < step; i++) {
+            // Compute angle directly instead of looking up index
+            double theta = -M_PI * i / step;
+            double wr = cos(theta);
+            double wi = sin(theta);
+
+            for (uint16_t j = i; j < SAMPLES; j += jump) {
+                uint16_t k = j + step;
+
+                double tr = wr * vReal[k] - wi * vImag[k];
+                double ti = wr * vImag[k] + wi * vReal[k];
+
+                vReal[k] = vReal[j] - tr;
+                vImag[k] = vImag[j] - ti;
+                vReal[j] += tr;
+                vImag[j] += ti;
+            }
+        }
+    }
+}
+#endif
+
+#ifdef FFT_FLOAT_LUT
 void run_fft(double *vReal, double *vImag) {
     // Bit Reversal
     uint16_t j = 0;
@@ -67,3 +116,4 @@ void run_fft(double *vReal, double *vImag) {
         }
     }
 }
+#endif

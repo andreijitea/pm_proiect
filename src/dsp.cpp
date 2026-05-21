@@ -1,5 +1,6 @@
 #include "dsp.hpp"
 #include "fft.hpp"
+#include "lut.hpp"
 
 void remove_dc_offset(double *data) {
     // Calculate the mean
@@ -15,11 +16,27 @@ void remove_dc_offset(double *data) {
     }
 }
 
+#ifdef USE_RECTANGULAR_WINDOW
+void apply_window(double *data) {
+    // No windowing, so do nothing
+}
+#endif
+
+#ifdef USE_HAMMING_WINDOW
 void apply_window(double *data) {
     for (int i = 0; i < SAMPLES; i++) {
         data[i] *= pgm_read_float(&hammingWindow[i]);
     }
 }
+#endif
+
+#ifdef USE_HANN_WINDOW
+void apply_window(double *data) {
+    for (int i = 0; i < SAMPLES; i++) {
+        data[i] *= pgm_read_float(&hannWindow[i]);
+    }
+}
+#endif
 
 void calculate_magnitude(double *vReal, double *vImag) {
     // Alpha Max Beta Min algorithm
