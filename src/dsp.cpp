@@ -16,17 +16,10 @@ void remove_dc_offset(double *data) {
     }
 }
 
-#ifdef USE_RECTANGULAR_WINDOW
-void apply_window(double *data) {
-    // No windowing, so do nothing
-}
-#endif
-
-#ifdef USE_HAMMING_WINDOW
 void apply_window(double *data) {
     for (int i = 0; i < SAMPLES; i++) {
 #if defined(FFT_INT_LUT)
-        // int16 table
+        // int16 table: Q15 scaled, divide by 32767 to get 0..1
         data[i] *=
             (double)((int16_t)pgm_read_word(&hammingWindow[i])) / 32767.0;
 #else
@@ -35,19 +28,6 @@ void apply_window(double *data) {
 #endif
     }
 }
-#endif
-
-#ifdef USE_HANN_WINDOW
-void apply_window(double *data) {
-    for (int i = 0; i < SAMPLES; i++) {
-#if defined(FFT_INT_LUT) || defined(FFT_INT_SPLITRADIX)
-        data[i] *= (double)((int16_t)pgm_read_word(&hannWindow[i])) / 32767.0;
-#else
-        data[i] *= pgm_read_float(&hannWindow[i]);
-#endif
-    }
-}
-#endif
 
 void calculate_magnitude(double *vReal, double *vImag) {
     // Alpha Max Beta Min algorithm

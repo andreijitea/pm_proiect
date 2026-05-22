@@ -127,11 +127,9 @@ void run_fft(double *vReal, double *vImag) {
     int16_t *rImag = (int16_t *)vImag;
 
     // Scale input up to use int16 range properly
-    // Forward loop is safe: writing to i*2 happens BEFORE reading from i*4
     for (uint16_t i = 0; i < SAMPLES; i++) {
-        // Cache the double before overwriting its memory footprint
         double realVal = vReal[i];
-        rReal[i] = (int16_t)(realVal * 64.0);
+        rReal[i] = (int16_t)(realVal * 32.0); 
         rImag[i] = 0;
     }
 
@@ -154,13 +152,12 @@ void run_fft(double *vReal, double *vImag) {
         j += k;
     }
 
-    // Cooley-Tukey FFT with Q15 twiddle factors
+    // Cooley-Tukey FFT
     for (uint16_t step = 1; step < SAMPLES; step <<= 1) {
         uint16_t jump = step << 1;
-        uint16_t tableSize = SAMPLES / 4;
 
-        // Prevent int16 overflow at each stage from stage 2 onwards
-        // Each butterfly can grow values by up to sqrt(2); >>1 keeps headroom
+        // Prevent int16 overflow at each stage
+        // Skip shift on the first stage to prevent rounding DC drift
         if (step > 1) {
             for (uint16_t m = 0; m < SAMPLES; m++) {
                 rReal[m] >>= 1;
@@ -169,26 +166,33 @@ void run_fft(double *vReal, double *vImag) {
         }
 
         for (uint16_t i = 0; i < step; i++) {
+            // Calculate twiddle factors from quarter-wave sine table
             uint16_t idx = (i * (SAMPLES / 2)) / step;
+            uint16_t tableSize = SAMPLES / 4;
 
             int16_t wr, wi;
 
-            // Reconstruct cos/sin from quarter-wave table using symmetry
-            // wr = cos(theta), wi = -sin(theta), theta = -pi*i/step
-            if (idx == 0) {
+            // Calculate wr = cos(theta)
+            if (idx == 0)
                 wr = 32767;
-                wi = 0;
-            } else if (idx < tableSize) {
+            else if (idx < tableSize)
                 wr = (int16_t)pgm_read_word(&sinTable[tableSize - idx]);
-                wi = -(int16_t)pgm_read_word(&sinTable[idx]);
-            } else if (idx == tableSize) {
+            else if (idx == tableSize)
                 wr = 0;
-                wi = -32767;
-            } else {
+            else
                 wr = -(int16_t)pgm_read_word(&sinTable[idx - tableSize]);
-                wi = -(int16_t)pgm_read_word(&sinTable[2 * tableSize - idx]);
-            }
 
+            // Calculate wi = -sin(theta)
+            if (idx == 0)
+                wi = 0;
+            else if (idx < tableSize)
+                wi = -(int16_t)pgm_read_word(&sinTable[idx]);
+            else if (idx == tableSize)
+                wi = -32767;
+            else
+                wi = -(int16_t)pgm_read_word(&sinTable[2 * tableSize - idx]);
+
+            // Butterfly computations
             for (uint16_t j = i; j < SAMPLES; j += jump) {
                 uint16_t k = j + step;
 
@@ -208,26 +212,20 @@ void run_fft(double *vReal, double *vImag) {
         }
     }
 
-// Output scaling:
-// Input was multiplied by 64
-// Right-shifted (log2(SAMPLES) - 1) times: 5 for N=64, 6 for N=128
-// Net scale for N=64:  64 / 32 = 2  → divide by 2
-// Net scale for N=128: 64 / 64 = 1  → divide by 1
-// Use compile-time constant to avoid runtime division
+// Scale output back to double range
+// So it has the same magnitude as the float versions of the FFT
 #if SAMPLES == 64
-    const double outputScale = 2.0;
+    const double outputMultiplier = 1.0;
 #elif SAMPLES == 128
-    const double outputScale = 1.0;
+    const double outputMultiplier = 2.0;
 #endif
 
-    // Reverse loop is safe: writing to i*4 happens AFTER reading from i*2
-    // (We write from back to front so we don't overwrite the packed ints we
-    // still need to read)
+    // Reverse loop to avoid overwriting data before it's read
     for (int16_t i = SAMPLES - 1; i >= 0; i--) {
         int16_t outR = rReal[i];
         int16_t outI = rImag[i];
-        vReal[i] = (double)outR / outputScale;
-        vImag[i] = (double)outI / outputScale;
+        vReal[i] = (double)outR * outputMultiplier;
+        vImag[i] = (double)outI * outputMultiplier;
     }
 }
 #endif

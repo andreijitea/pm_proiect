@@ -20,9 +20,4 @@
 // #define FFT_FLOAT_LUT
 #define FFT_INT_LUT
 
-// Windowing Options
-// #define USE_RECTANGULAR_WINDOW
-// #define USE_HAMMING_WINDOW
-#define USE_HANN_WINDOW
-
 #endif

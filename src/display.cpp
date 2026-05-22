@@ -11,10 +11,11 @@ void init_display() {
 }
 
 void draw_spectrum() {
+    const int firstBin = SAMPLES / 32;
     u8g2.firstPage();
     do {
         // Skip the first 2 bins
-        for (int i = 2; i < (SAMPLES / 2); i++) {
+        for (int i = firstBin; i < (SAMPLES / 2); i++) {
             int h = (int)smoothedHeights[i];
             if (h > 63)
                 h = 63;
@@ -24,7 +25,7 @@ void draw_spectrum() {
             // 4px for 64 samples
             // 2px for 128 samples
             int binWidth = 256 / SAMPLES;
-            int x = (i - 2) * binWidth;
+            int x = (i - firstBin) * binWidth;
 
             u8g2.drawBox(x, 64 - h, binWidth - 1, h);
         }
