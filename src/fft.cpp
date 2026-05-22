@@ -129,7 +129,7 @@ void run_fft(double *vReal, double *vImag) {
     // Scale input up to use int16 range properly
     for (uint16_t i = 0; i < SAMPLES; i++) {
         double realVal = vReal[i];
-        rReal[i] = (int16_t)(realVal * 32.0); 
+        rReal[i] = ((int16_t)realVal) << 5; 
         rImag[i] = 0;
     }
 
@@ -156,8 +156,7 @@ void run_fft(double *vReal, double *vImag) {
     for (uint16_t step = 1; step < SAMPLES; step <<= 1) {
         uint16_t jump = step << 1;
 
-        // Prevent int16 overflow at each stage
-        // Skip shift on the first stage to prevent rounding DC drift
+        // Prevent int16 overflow by right-shifting the results
         if (step > 1) {
             for (uint16_t m = 0; m < SAMPLES; m++) {
                 rReal[m] >>= 1;
@@ -220,7 +219,7 @@ void run_fft(double *vReal, double *vImag) {
     const double outputMultiplier = 2.0;
 #endif
 
-    // Reverse loop to avoid overwriting data before it's read
+    // Reverse loop to avoid overwriting data before it is read
     for (int16_t i = SAMPLES - 1; i >= 0; i--) {
         int16_t outR = rReal[i];
         int16_t outI = rImag[i];
